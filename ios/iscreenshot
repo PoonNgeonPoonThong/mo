@@ -1,0 +1,36 @@
+#!/bin/bash
+trap "kill 0" SIGINT # Kill all spawned subprocesses on ctrl^c
+LOCATION=$(dirname "$0")
+source "$LOCATION"/../common_tools
+cd ~/Desktop || exit
+
+screenshot(){
+  ios_device_info "$1"
+  FILENAME="$MANUFACTURER-$MODEL-iOS$VERSION-$(date +%Y-%m-%d-%H-%M-%S).png"
+  echo "📸 Saving screenshot into $FILENAME..."
+  idevicescreenshot -u "$1" "$FILENAME" &> /dev/null
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    echo "🤷 Screenshot failed, error code: $EXIT_CODE"
+    prompt_xcode_launch
+    screenshot "$1"
+  fi
+}
+
+screenshot_all(){
+  check_for_update
+  ios_get_devices
+  for ID in "${IOS_USB_DEVICES[@]}"
+   do
+    screenshot "$ID" &
+  done
+  wait
+}
+
+if [ "$1" == "-a" ];
+then
+  screenshot_all
+else
+  ios_choose_device
+  screenshot "$SELECTED_DEVICE"
+fi

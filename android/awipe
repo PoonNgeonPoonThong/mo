@@ -1,0 +1,27 @@
+#!/bin/bash
+LOCATION=$(dirname "$0")
+source "$LOCATION"/../common_tools
+android_choose_device
+
+prompt(){
+  tput setaf 1
+  yes_or_no "💣 Wipe all data on $SELECTED_DEVICE_MODEL - $SELECTED_DEVICE?"
+  tput sgr0
+  if [[ "$RESPONSE" == "y" ||  "$RESPONSE" == "Y" ]]; then
+    wipe_apps
+    wipe_data
+  fi
+}
+
+wipe_data(){
+  echo "🔥 Deleting everything in mnt/sdcard..."
+  adb -s "$SELECTED_DEVICE" shell rm -rf mnt/sdcard/*
+}
+
+wipe_apps(){
+  echo "🔥 Deleting all third-party apps..."
+  "$LOCATION"/auninstall "-a" "$SELECTED_DEVICE"
+}
+
+prompt
+echo "✅ Done"
